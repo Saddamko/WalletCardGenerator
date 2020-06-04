@@ -13,21 +13,13 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import org.springframework.web.bind.annotation.ResponseBody;
+import javax.servlet.ServletConfig;
 
 /**
  *
  * @author VashurinVlad
  */
-@WebServlet(name = "WalletCardGenerator", description = "REST Wallet Card Generator Servlet", urlPatterns = {"/Servlet", "/index", "/{id}", "/login"})
+@WebServlet(name = "WalletCardGenerator", description = "REST Wallet Card Generator Servlet", urlPatterns = {"/WalletCardGenerator", "/WalletCardGenerator/wallet"})
 public class WalletCardGenerator extends HttpServlet {
 
     /**
@@ -69,7 +61,30 @@ public class WalletCardGenerator extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 //        processRequest(request, response);
-        request.getRequestDispatcher("/testget.jsp").forward(request, response);
+
+        
+        if (request.getRequestURI().equals("/WalletCardGeneratorContext/WalletCardGenerator")) {
+            response.setContentType("text/html");
+//            response.getWriter().print("<html><head></head><body><h1>Welcome!</h1><p>This is a very cool page!</p></body></html>");
+            request.getRequestDispatcher("/testget.jsp").forward(request, response);
+            ;
+            
+        } else if (request.getRequestURI().startsWith("/WalletCardGeneratorContext/WalletCardGenerator/wallet")) {
+
+            Integer prettyFragileUserId = Integer.valueOf(request.getRequestURI().substring(request.getRequestURI().lastIndexOf("/") + 1));
+
+            response.setContentType("application/json");
+
+            // User user = dao.findUser(prettyFragileUserId)
+            // actually: jsonLibrary.toString(user)
+            response.getWriter().print("{\n" +
+                    "  \"id\":" + prettyFragileUserId + ",\n" +
+                    "  \"age\": 48,\n" +
+                    "  \"name\" : \"Vladimir Vashurin\"\n" +
+                    "}");
+        } else {
+            throw new IllegalStateException("Help, I don't know what to do with this url");
+        }
     }
 
     /**
