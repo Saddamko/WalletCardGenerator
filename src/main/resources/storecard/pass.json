@@ -1,0 +1,38 @@
+{
+	"passTypeIdentifier": "pass.com.ikeafamily", 
+	"formatVersion": 1,
+	"organizationName": "Starbucks",
+	"teamIdentifier": "T592A5LX2R",
+	"serialNumber": "705598-224-185",
+    "backgroundColor": "rgb(240,240,240)",
+	"logoText": "Starbucks",
+	"description": "Demo pass",
+	"storeCard": {
+        "secondaryFields": [
+            {
+                "key": "balance",
+                "label": "BALANCE",
+                "value": "$25.71"
+            },
+            {
+                "key": "name",
+                "label": "NICKNAME",
+                "value": "Vladimir Vashurin"
+            }
+
+        ],
+        "backFields": [
+            {
+                "key": "id",
+                "label": "Card Number",
+                "value": "705598-224-185"
+            }
+        ]
+    },
+    "barcode": {
+        "format": "PKBarcodeFormatPDF417",
+        "message": "705598-224-185",
+        "messageEncoding": "iso-8859-1",
+        "altText": "705598-224-185"
+    }
+    }
