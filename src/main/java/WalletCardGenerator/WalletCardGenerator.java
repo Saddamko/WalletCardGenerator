@@ -75,7 +75,7 @@ public   class WalletCardGenerator extends HttpServlet {
     /** Пароль пользователя для соединения с базой Siebel, считывается с файла siebel.properties*/
     static String SiebelUserPassword; 
     /** Параметры для файла pkpass, считываются с файла siebel.properties*/
-    static String sPass, keyPassword, logoText, organizationName, teamIdentifier, passTypeIdentifier, certAlias;
+    static String sPass, keyPassword, logoText, organizationName, teamIdentifier, passTypeIdentifier, certAlias, backfld1, backfld2, mobileURL, prefered;
     /** Имя клиента для pkpass */
     static String sFirstName;
     /** Фамилия клиента для pkpass */
@@ -147,8 +147,6 @@ protected void doGet (HttpServletRequest request, HttpServletResponse response) 
         out.close();
         }
 }
-
-
 
 /**
  * Обработка HTTP <code>POST</code> метода.
@@ -236,12 +234,12 @@ protected void doGet (HttpServletRequest request, HttpServletResponse response) 
                                         )
 					.auxiliaryFields(
 						new TextField("owner" ,"Владелец карты", sFirstName +" "+sLastName),
-						new TextField("usual","Доп. поля",  "+380675555555")                                                
+						new TextField("prefered","Доп. поля",  prefered)                                                
 					)
 					.backFields(
-                                                new TextField("backfld1","Обр. поле", "Пример"),
-                                                new TextField("backfld2","Поддержка", "+38(067)5772841"),
-                                                new TextField("mobile","Мобильное приложение",  "https://uniqa.ua/buy/mobile-app-myuniqa/"),
+                                                new TextField("backfld1","Обр. поле", backfld1),
+                                                new TextField("backfld2","Поддержка", backfld2),
+                                                new TextField("mobile","Мобильное приложение",  mobileURL),
                                                 new TextField("website","Соглашение", "terms_value")
 					)
 			);
@@ -353,7 +351,11 @@ try {
     teamIdentifier =        properties.getProperty("wallet.teamIdentifier");
     logoText =              properties.getProperty("wallet.logoText");
     keyPassword =           properties.getProperty("wallet.keyPassword");
-    certAlias =           properties.getProperty("wallet.certAlias");
+    certAlias =             properties.getProperty("wallet.certAlias");
+    backfld1 =              properties.getProperty("wallet.backfld1");
+    backfld2 =              properties.getProperty("wallet.backfld2");
+    mobileURL =             properties.getProperty("wallet.mobileURL");
+    prefered =             properties.getProperty("wallet.prefered");
 
     fileInputStream.close();
     } catch (FileNotFoundException e) 
