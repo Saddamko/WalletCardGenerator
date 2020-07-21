@@ -1,8 +1,12 @@
 /*
-http://localhost:1488/WalletCardGeneratorContext/WalletCardGenerator
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+* @author Вашурин Владимир
+* @version 2020.07.21.1
+* Сервлет для Tomcat сервера
+* При помощи библиотеки passkit4j выполняется генерация файлов для кошельков
+* Google Pay — мобильное платёжное приложение для операционной системы Android.
+* Во вкладке «Карты», хранятся карты программ лояльности, предложения и подарочные карты.
+* Для получения параметров клиента, помещаемых в кошелек,
+* выполняется запрос в Siebel
  */
 package WalletCardGenerator;
 
@@ -35,31 +39,22 @@ import com.siebel.data.SiebelBusComp;
 import com.siebel.data.SiebelBusObject;
 import com.siebel.data.SiebelDataBean;
 import com.siebel.data.SiebelException;
-import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.Properties;
-import java.util.Random;
-import java.util.Scanner;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpSession;
-import org.krysalis.barcode4j.servlet.BarcodeServlet;
 import org.krysalis.barcode4j.webapp.BarcodeRequestBean;
 
-/**
- *
- * @author VashurinVlad
- */
-
-
+/** 
+ * Сервлет для Tomcat сервера <b>WalletCardGenerator</b>
+ * Назначение: генерация карт для электронных кошельков <b>Apple Wallet</b> и <b>Google Pay</b>
+ * @author Владимир Вашурин
+ * @version 1.0.1
+*/
 @WebServlet(name = "WalletCardGenerator", description = "REST Wallet Card Generator Servlet", urlPatterns = {"/WalletCardGenerator", "/WalletCardGenerator/wallet"})
 public   class WalletCardGenerator extends HttpServlet {
 
@@ -73,23 +68,38 @@ public   class WalletCardGenerator extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     
-    
+    /** Строка соединения с базой Siebel, считывается с файла siebel.properties */
     static String SiebelConnectString;
+    /** Имя пользователя для соединения с базой Siebel, считывается с файла siebel.properties*/
     static String SiebelUser;
+    /** Пароль пользователя для соединения с базой Siebel, считывается с файла siebel.properties*/
     static String SiebelUserPassword; 
-    static String sPass, keyPassword, logoText, organizationName, teamIdentifier, passTypeIdentifier;
+    /** Параметры для файла pkpass, считываются с файла siebel.properties*/
+    static String sPass, keyPassword, logoText, organizationName, teamIdentifier, passTypeIdentifier, certAlias;
+    /** Имя клиента для pkpass */
     static String sFirstName;
+    /** Фамилия клиента для pkpass */
     static String sLastName;
+    /** Отчество клиента для pkpass */
     static String sMiddleName;
+    /** Компонент для генерашии штрихкодов */
     BarcodeRequestBean BarCodeBean;
     static File jarFile;
     static String jarFilePath;
+    /** Определение физического каталога Tomcat Catalina для сохранения выходных файлов */
     File catalinaBase = new File(System.getProperty("catalina.base")).getAbsoluteFile();
         
-     @Override
-        protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException, PassSerializationException, FileNotFoundException {
-       
+
+/**
+* Обработка HTTP <code>GET</code> метода.
+* @param request servlet запрос
+* @param response servlet ответ
+* @throws ServletException при появлении servlet-specific ошибок
+* @throws IOException  при ошибках ввода-вывода
+*/
+@Override
+protected void doGet (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException, PassSerializationException, FileNotFoundException 
+{
         if (request.getRequestURI().contains("/wallet/generate")) {
             String user = request.getRequestURI().substring(request.getRequestURI().lastIndexOf("/") + 1);
 
@@ -136,32 +146,45 @@ public   class WalletCardGenerator extends HttpServlet {
         out.flush();
         out.close();
         }
-        }
+}
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+
+
+/**
+ * Обработка HTTP <code>POST</code> метода.
+ * @param request servlet запрос
+ * @param response servlet ответ
+ * @throws ServletException при появлении servlet-specific ошибок
+ * @throws IOException  при ошибках ввода-вывода
+ */
+@Override
+    protected void doPost (HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
 //          request.getRequestDispatcher("/testpost.jsp").forward(request, response);
-    }
+}  
 
-    
-
+/** 
+ * Метод <b>pass</b>
+ * Назначение: генерация файла pkpass для электронных кошельков <b>Apple Wallet</b>
+ * @param user Row ID записи Контакта в Siebel
+ * @return Код возврата с признаком успеха (пока все время 0)
+ * @throws FileNotFoundException  при ошибках ввода-вывода
+ * @throws PassSigningException  при ошибках формирования цифровой подписи
+ * @throws PassSerializationException  при ошибках формирования цифровой подписи 
+ * @throws ParseException  при ошибках формирования цифровой подписи 
+ * @author Владимир Вашурин
+ * @version 1.0.1
+*/
     public  int pass (String user) throws FileNotFoundException, PassSigningException, PassSerializationException, ParseException {
         
 
         String pass_strings =   catalinaBase+"/webapps/siebel-wallet/storecard/en.lproj/pass.strings";
         String icon_png =       catalinaBase+"/webapps/siebel-wallet/storecard/icon.png";
         String icon_2x_png =    catalinaBase+"/webapps/siebel-wallet/storecard/icon@2x.png";
+        String icon_3x_png =    catalinaBase+"/webapps/siebel-wallet/storecard/icon@3x.png";
         String logo_png =       catalinaBase+"/webapps/siebel-wallet/storecard/logo.png";
         String logo_2x_png =    catalinaBase+"/webapps/siebel-wallet/storecard/logo@2x.png";
+        String logo_3x_png =    catalinaBase+"/webapps/siebel-wallet/storecard/logo@3x.png";
         String strip_png =      catalinaBase+"/webapps/siebel-wallet/storecard/strip.png";
         String strip_2x_png =   catalinaBase+"/webapps/siebel-wallet/storecard/strip@2x.png";
         String CertP12 =        catalinaBase+"/webapps/siebel-wallet/Certificates.p12";
@@ -171,45 +194,55 @@ public   class WalletCardGenerator extends HttpServlet {
         Pass pass = new Pass()
 			.teamIdentifier(teamIdentifier)
 			.passTypeIdentifier(passTypeIdentifier)
-			.organizationName(organizationName)
-                        
-			.description("This card is generated for " + user)
-			.serialNumber("9bcc08b")
+			.organizationName(organizationName)                      
+			.description("Карта сгенерирована для клиента " + user)
+			.serialNumber(user)
                         .expirationDate(new SimpleDateFormat("dd/MM/yyyy").parse("01/01/2100"))
-			.locations(
-				new Location(43.145863, -77.602690).relevantText(organizationName),
-				new Location(43.131063, -77.636425).relevantText(organizationName)
-			)
+//			.locations(
+//				new Location(43.145863, -77.602690).relevantText(organizationName),
+//				new Location(43.131063, -77.636425).relevantText(organizationName)
+//			)
 			.barcode(new Barcode(BarcodeFormat.PDF417, "0294154197253"))
 			.barcodes(
-					new Barcode(BarcodeFormat.CODE128, "0294154197253"),
-					new Barcode(BarcodeFormat.PDF417, "0294154197253"))
+					new Barcode(BarcodeFormat.CODE128, "0294154197253")
+//					new Barcode(BarcodeFormat.PDF417, "0294154197253")
+                                        )
 			.logoText(logoText)
 			.foregroundColor(Color.WHITE)
 			.backgroundColor(new Color(0x2c, 0x97, 0xdb))
 			.files(
 				new PassResource("en.lproj/pass.strings", new File(pass_strings)),
                                 new PassResource("ru.lproj/pass.strings", new File(pass_strings)),
+                                new PassResource("uk.lproj/pass.strings", new File(pass_strings)),
 				new PassResource(icon_png),
 				new PassResource(icon_2x_png),
+//                                new PassResource(icon_3x_png),
 				new PassResource(logo_png),
 				new PassResource(logo_2x_png),
+//                                new PassResource(logo_3x_png)
 				new PassResource(strip_png),
 				new PassResource(strip_2x_png)
 			)
 			.passInformation(
 				new StoreCard()
 					.headerFields(
-						new NumberField("Balance", "Баланс", 0)
+						new NumberField("Balance","Баланс",  0)
 							.textAlignment(TextAlignment.RIGHT)
 							.currencyCode("UAH")
 					)
+                                        .primaryFields(
+                                                new TextField("website","Осн. поля",  "UNIQA")
+                                                
+                                        )
 					.auxiliaryFields(
-						new TextField("owner","Владелец карты" , sFirstName +" "+sLastName),
-						new TextField("usual", "Препочтительно", "+380675555555")
+						new TextField("owner" ,"Владелец карты", sFirstName +" "+sLastName),
+						new TextField("usual","Доп. поля",  "+380675555555")                                                
 					)
 					.backFields(
-						new TextField("terms", "Соглашение", "terms_value")
+                                                new TextField("backfld1","Обр. поле", "Пример"),
+                                                new TextField("backfld2","Поддержка", "+38(067)5772841"),
+                                                new TextField("mobile","Мобильное приложение",  "https://uniqa.ua/buy/mobile-app-myuniqa/"),
+                                                new TextField("website","Соглашение", "terms_value")
 					)
 			);
 
@@ -217,24 +250,28 @@ public   class WalletCardGenerator extends HttpServlet {
                 
                 try {
                     FileInputStream is =new FileInputStream(new File(CertP12));
-                    KeyStore ks = KeyStore.getInstance("PKCS12");
-                    
+                    KeyStore ks = KeyStore.getInstance("PKCS12");  
                     ks.load(is, password);
-                    } catch (Exception e) {
-                    e.printStackTrace();
-                    }
+                    } catch (Exception e) {e.printStackTrace();}
 
 		PassSigner signer = PassSignerImpl.builder()
 			.keystore(new FileInputStream(CertP12) , keyPassword )
 			.intermediateCertificate(new FileInputStream(CertApple))
+                        .alias(certAlias)
 			.build();
 
 		PassSerializer.writePkPassArchive(pass, signer, new FileOutputStream(pkpass));
         return 0;
                 
-    }
+}
     
- int GetContactInfo(String sROWID) throws FileNotFoundException, IOException
+ /** 
+ * Метод <b>GetContactInfo</b>
+ * Назначение: Получение данных о контакте из Siebel по полученному в параметре идентификаторе клиента
+ * @author Владимир Вашурин
+ * @version 1.0.1
+*/
+ public int GetContactInfo(String sROWID) throws FileNotFoundException, IOException
  {
     int n=0;
     try {
@@ -265,7 +302,8 @@ public   class WalletCardGenerator extends HttpServlet {
                 sLastName = BC.getFieldValue("Last Name");
                 sMiddleName = BC.getFieldValue("Middle Name");
                 System.out.println("Contact: "+ sFirstName +" "+sMiddleName+" "+sLastName);
-            }
+                n=0; //Data is aquired
+            } else n=-1;
             BC = null;
             BO = null;
             sblConnect.logoff();
@@ -275,56 +313,53 @@ public   class WalletCardGenerator extends HttpServlet {
         {           
                 e.printStackTrace();
         }
-
-
         Date date = Calendar.getInstance().getTime();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
         String strDate = dateFormat.format(date);        
                 
-    return n;
-                
+    return n;              
  }
 
+ 
+  /** 
+ * Метод <b>GetProperties</b>
+ * Назначение: Получение параметров для подключения к Siebel и формирования кошелька из файла siebel.properties
+ * для обеспечения возможности конфигурирования без изменения кода программы
+ * и исключения секретных данных из программного кода
+ * @author Владимир Вашурин
+ * @version 1.0.1
+*/
 void GetProperties () throws IOException, URISyntaxException
 {
-    //файл, который хранит свойства нашего проекта
-    //создаем объект Properties и загружаем в него данные из файла.        
-        String jarFilePath = catalinaBase+"/webapps/siebel-wallet/";
-        System.out.println(jarFilePath);
-        jarFilePath=jarFilePath+"siebel.properties";
+//файл, который хранит свойства нашего проекта
+//создаем объект Properties и загружаем в него данные из файла.        
+String jarFilePath = catalinaBase+"/webapps/siebel-wallet/";
+System.out.println(jarFilePath);
+jarFilePath=jarFilePath+"siebel.properties";
 
-        try {
-                File myObj = new File(jarFilePath);
-                InputStream inp;   
-        FileInputStream fileInputStream = new FileInputStream(jarFilePath);          
-    
-        Properties properties = new Properties();
-        // load a properties file
-        properties.load(fileInputStream);
-        // get the property value and print it out
-        SiebelConnectString =   properties.getProperty("siebel.connectstring");
-        SiebelUser=             properties.getProperty("siebel.user");
-        SiebelUserPassword=     properties.getProperty("siebel.password");
-        organizationName =      properties.getProperty("wallet.organizationName");
-        passTypeIdentifier =    properties.getProperty("wallet.passTypeIdentifier");
-        teamIdentifier =        properties.getProperty("wallet.teamIdentifier");
-        logoText =              properties.getProperty("wallet.logoText");
-        keyPassword =           properties.getProperty("wallet.keyPassword");
-        
-          Scanner myReader = new Scanner(myObj);
-          while (myReader.hasNextLine()) {
-            String data = myReader.nextLine();
-            System.out.println(data);
-          }
-          myReader.close();
-        } catch (FileNotFoundException e) {
-          System.out.println("An error occurred.");
-          e.printStackTrace();
+try {
+    File myObj = new File(jarFilePath);
+    FileInputStream fileInputStream = new FileInputStream(jarFilePath);          
+
+    Properties properties = new Properties();
+    // load a properties file
+    properties.load(fileInputStream);
+    // get the property value and print it out
+    SiebelConnectString =   properties.getProperty("siebel.connectstring");
+    SiebelUser =            properties.getProperty("siebel.user");
+    SiebelUserPassword =    properties.getProperty("siebel.password");
+    organizationName =      properties.getProperty("wallet.organizationName");
+    passTypeIdentifier =    properties.getProperty("wallet.passTypeIdentifier");
+    teamIdentifier =        properties.getProperty("wallet.teamIdentifier");
+    logoText =              properties.getProperty("wallet.logoText");
+    keyPassword =           properties.getProperty("wallet.keyPassword");
+    certAlias =           properties.getProperty("wallet.certAlias");
+
+    fileInputStream.close();
+    } catch (FileNotFoundException e) 
+        {
+        System.out.println("An error occurred.");
+        e.printStackTrace();
         }
-  
-        InputStream inp;   
-        inp = WalletCardGenerator.class.getResourceAsStream("siebel.properties");
-        System.out.println(inp != null);  
-        System.out.println(jarFilePath);
-}
-}
+}//GetProperties () end
+}//main class end
