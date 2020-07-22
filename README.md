@@ -6,3 +6,4 @@ After deploying, this app is listening requests and doing some actions:
 1. If URL consists "generate" command, wallet file ".pkpass" is created
 2. If request is "GetWallet" - url for downloading pkpass is generated
 
+Aplication is designed with Netbeans IDE 8.2 and based on com.ryantenney.passkit4j library, which allow simplify of process of creating pkpass zip archieve.
