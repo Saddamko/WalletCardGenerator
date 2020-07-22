@@ -7,3 +7,5 @@ After deploying, this app is listening requests and doing some actions:
 2. If request is "GetWallet" - url for downloading pkpass is generated
 
 Aplication is designed with Netbeans IDE 8.2 and based on com.ryantenney.passkit4j library, which allow simplify of process of creating pkpass zip archieve.
+
+Main program code you can find in WalletCardGenerator/src/main/java/WalletCardGenerator/WalletCardGenerator.java file
